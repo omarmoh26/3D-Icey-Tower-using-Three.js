@@ -1,0 +1,336 @@
+
+<!-- My scene -->
+<!DOCTYPE html>
+	<style>
+	.score{
+			position:fixed;
+			top:20px;
+			left:740px;
+			color: black;
+			font-size: 20px;
+	}
+	.menu {
+		position: fixed;
+		top: 20px;
+		right: 20px;
+	}
+	button {
+		margin-bottom: 6px;
+		width: 120px;
+		font-size: 14px;
+		outline: none;
+		background: #333;
+		color: #ddd;
+		border: none;
+		opacity: .5;
+	}
+	button:hover {
+		background: #222;
+		color: #eee;
+	}
+
+	</style>
+	<canvas id="scene" ></canvas>
+	<div id="counter">
+	<div class="score" id="scoree">
+        <h2> Score<div id="score">
+            <center>0</center>
+        </h2>
+	</div>
+	</div>
+	</div><div class= "menu1">
+
+		<div class="menu">
+			<button onclick="start()">Start game</button>
+		</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js"></script>
+
+<script>
+
+function start(){
+	// button.style.display='none';
+	var ww = window.innerWidth,wh = window.innerHeight;
+
+	renderer = new THREE.WebGLRenderer({canvas : document.getElementById('scene')});
+	renderer.setClearColor(0xffffff);
+	renderer.setSize(ww,wh);
+
+	var player = { height:2, speed:0.2};
+
+	var scene = new THREE.Scene();
+	var camera = new THREE.PerspectiveCamera(50, ww/wh, 0.1, 10000);
+
+	var st=4;
+	var low=4.5;
+	function init(){
+
+		light = new THREE.DirectionalLight(0xffffff, 1);
+		light.position.set( 0, 900, -500 );
+		scene.add(light);
+
+		geometryBox = new THREE.BoxGeometry(0.5,player.height,0.5);
+		texture = new THREE.TextureLoader().load('face.jpeg');
+		mat1 =  new THREE.MeshBasicMaterial( {map: texture} );//player
+		box = new THREE.Mesh(geometryBox, mat1);
+		box.position.y=1.62;
+		scene.add(box);
+
+
+		geometryBox = new THREE.BoxGeometry(0.25,12,10);
+		texture = new THREE.TextureLoader().load( 'start.jpeg' );
+		mat3 = new THREE.MeshBasicMaterial( {map: texture} );//start slab
+		start = new THREE.Mesh(geometryBox, mat3);
+		start.rotation.z = Math.PI/2;
+		start.position.y =0.5;
+		start.position.x =0;
+		start.position.z =-1.5;
+		scene.add(start);
+
+		recs = new THREE.Object3D();
+		geometryBox = new THREE.BoxGeometry(4,0.25,1);
+		tex = new THREE.TextureLoader().load( 'stair.jpeg' );
+		mat4 = new THREE.MeshBasicMaterial( {map:tex} );
+
+		for(var j=0;j<1000;j++)
+		{
+			rec = new THREE.Mesh(geometryBox, mat4);//stairs
+
+			rec.position.y =low;
+			rec.position.x =8*Math.random()-4;
+			rec.position.z =st;
+
+			low=low+4;
+			st=st+4;
+			recs.add(rec);
+		}
+		scene.add(recs);
+
+		view();
+		walls();
+		floors();
+		cmove();
+		renderer.render(scene, camera);
+	}
+
+	function view()
+	{
+		camera.position.set(0,player.height+3, -10);
+		camera.lookAt(new THREE.Vector3(0,player.height+2,0));
+	}
+
+	function floors()
+	{
+		geometryfloor = new THREE.PlaneGeometry(12,100000,100,100);
+		texture2 = new THREE.TextureLoader().load( 'lava.jpeg' );
+		mat2 = new THREE.MeshBasicMaterial({map: texture2 ,side: THREE.DoubleSide});
+		floor = new THREE.Mesh(geometryfloor,mat2);
+		floor.position.z =10;
+		floor.rotation.x = Math.PI / 2; // Rotate the floor 90 degrees
+		scene.add(floor);
+	}
+
+	function walls()
+	{
+  //---------------------------WALLS--------------------------------//
+		geometrywalls = new THREE.PlaneGeometry(1000000,30, 100,100);
+		const textureLoader = new THREE.TextureLoader()
+		const texture3 = textureLoader.load('wall.jpeg',(textures2) => {
+			textures2.wrapS = textures2.wrapT = THREE.RepeatWrapping
+			textures2.repeat.x = 20000
+			textures2.repeat.y = 1
+		})
+		matwall1 = new THREE.MeshBasicMaterial({ map: texture3 ,side: THREE.DoubleSide});//left wall
+
+		wall1 = new THREE.Mesh(geometrywalls,matwall1);
+		wall1.position.z=10;
+		wall1.position.x=6;
+		wall1.position.y=15;
+		wall1.rotation.y= Math.PI / 2; // Rotate the floor 90 degrees
+		scene.add(wall1);
+
+		wall2 = new THREE.Mesh(geometrywalls,matwall1);//right wall
+		wall2.position.z =10;
+		wall2.position.x=-6;
+		wall2.position.y=15;
+		wall2.rotation.y= Math.PI / 2; // Rotate the floor 90 degrees
+		scene.add(wall2);
+	}
+
+	//------------------------------MOVEMENTS----------------------------//
+
+	function borders()
+	{
+		if(box.position.x>5.75)
+		{
+			box.position.x=5.75;
+		}
+		if(box.position.x<-5.75)
+		{
+			box.position.x=-5.75;
+		}
+	}
+	var counter=0;
+    var i=0
+	var score=0;
+
+	function onKeyUp(event)
+	{
+
+		requestAnimationFrame(onKeyUp);
+
+		if (event.keyCode == '104' )//obj forward
+			{
+				moveF();
+				gameover(i);
+				i=i+1;
+				counter=counter+1;
+				score=score+10;
+				document.getElementById("score").innerHTML=score;
+
+			}
+
+		if (event.keyCode == '103' )
+			{//obj forward left
+				moveL();
+				gameover(i);
+                i=i+1;
+				counter=counter+1;
+				score=score+10;
+				document.getElementById("score").innerHTML=score;
+
+			}
+
+		if (event.keyCode == '105' )//obj forward right
+			{
+				moveR();
+				gameover(i);
+                i=i+1;
+		  	counter=counter+1;
+				score=score+10;
+				document.getElementById("score").innerHTML=score;
+
+			}
+
+		if(event.keyCode == '100')// obj left key
+			{
+				box.position.x+=player.speed;
+        borders();
+        gameover(i-1);
+
+			}
+
+		if(event.keyCode == '102') // obj right key
+			{
+				box.position.x-=player.speed;
+        borders();
+        gameover(i-1);
+
+			}
+			renderer.render(scene, camera);
+	}
+
+
+	function moveF()
+	{
+				box.position.z +=4;
+				box.position.y +=4;
+				camera.position.z +=4;
+				camera.position.y +=4;
+				floor.position.y  +=4;
+				wall1.position.y  +=4;
+				wall2.position.y  +=4;
+				camera.position.z-=0.35;
+        borders();
+
+	}
+
+	function moveL()
+	{
+			box.position.z+=4;
+			box.position.y+=4;
+			box.position.x+=4;
+			floor.position.y+=4;
+			wall1.position.y+=4;
+			wall2.position.y+=4;
+			camera.position.z+=4;
+			camera.position.y+=4;
+			camera.position.z-=0.35;
+			borders();
+	}
+
+	function moveR()
+	{
+			box.position.z+=4;
+			box.position.y+=4;
+			box.position.x-=4;
+			floor.position.y  +=4;
+			wall1.position.y  +=4;
+			wall2.position.y  +=4;
+			camera.position.z +=4;
+			camera.position.y +=4;
+			camera.position.z-=0.35;
+			borders();
+ 	}
+
+		var cam=true;
+		var level=0;
+		function cmove()
+		{
+			id=requestAnimationFrame(cmove);
+			if(cam=true)
+			{
+				camera.position.z +=0.004+level;
+				lose(id);
+				if(counter==10)
+				{
+					level=level+0.002;
+					counter=0;
+				}
+			}
+			renderer.render(scene, camera);
+		}
+
+		var text="                                                 Game Over"
+		function lose(id)
+		{
+			if(box.position.z-4<camera.position.z)
+			{
+
+                alert(text);
+				window.location.reload();
+				cancelAnimationFrame(id);
+			}
+		}
+
+    var reccc =[];
+    var fall=0;
+
+		function gameover( i)
+		{
+            fall=0;
+        		boxxx=new THREE.Box3().setFromObject(box);
+                reccc[i]=new THREE.Box3().setFromObject(recs.children[i]);
+        		rbCollision=(boxxx.intersectsBox(reccc[i]));
+
+  		  if(rbCollision)
+  		  {
+               fall=1;
+  		  }
+        end();
+  	};
+
+    function end()
+    {
+      if(fall==0)
+      {
+
+        alert(text);
+				window.location.reload();
+      }
+    }
+    
+	window.addEventListener('keyup', onKeyUp);
+	init();
+}
+</script>
